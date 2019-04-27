@@ -69,20 +69,48 @@ struct sCar {
 	sRect rect;
 	eDirection dir;
 	int speed;
-	///////
+	/*движение 
+	 учитывая, что левый верхний угол машины нулевой, 
+	 то и левый верхний угол экрана будет считаться нулевым,
+	следовательно все, что будет двигать вверх оно будет двигаться противоположно оси ОУ -,
+	а в них - по направлению ОУ +
+	*/
 	void move() {
 		switch (dir) {
 		case eDirection::UP:
-			rect.pos.y += speed;
-		case eDirection::DOWN:
 			rect.pos.y -= speed;
+		case eDirection::DOWN:
+			rect.pos.y += speed;
 		case eDirection::RIGHT:
 			rect.pos.x += speed;
 		case eDirection::LEFT:
 			rect.pos.x -= speed;
 		}
 	}
-	// ошибка не при всех значениях возвращает
+	// перемещение машины если они стоят друг на друге
+	void moveOder(sCar* otherCar) {
+		
+		switch (dir) {
+		case eDirection::UP:
+			rect.pos.y += otherCar->rect.size.height;
+			break;
+
+		case eDirection::DOWN:
+			rect.pos.y -= otherCar->rect.size.height;
+			break;
+		case eDirection::RIGHT:
+			rect.pos.x -= otherCar->rect.size.width;
+			break;
+		case eDirection::LEFT:
+			rect.pos.x += otherCar->rect.size.width;
+			break;
+
+
+
+		}
+	}
+
+	// ошибка не при всех значениях возвращает исправлена
 	sRect getFuturePos() {
 		//if (dir != NULL)
 		switch (dir) {
@@ -136,20 +164,17 @@ struct sCar {
 	virtual int getFuel() = 0;
 	virtual void refill(int count) = 0;
 
+	// вывод машин для проверки
 	string Print()
 	{ 
 		
 		string inf;
-		inf = " x = \t";
-		inf += to_string(rect.pos.x);
-		inf += "\t y = \t";
-		inf += to_string(rect.pos.y);
-		inf += "\t height = ";
-		inf += to_string(rect.size.height);
-		inf += "\t width = ";
-		inf += to_string(rect.size.width);
+		inf = " x = \t" + to_string(rect.pos.x);
+		inf += "\t y = \t" + to_string(rect.pos.y);
+		//inf += "\t height = + to_string(rect.size.height);
+		//inf += "\t width = + to_string(rect.size.width);
 		inf += "\t Direction = " + enum_to_string(dir);
-		inf += "\t Fuel = " + to_string( getFuel() );
+		//inf += "  \t Fuel = " + to_string( getFuel() );
 
 			return inf;
 	}
@@ -193,53 +218,68 @@ const int initialCarsCount = 20;
 
 /*
 анализ по поводу размещения машин:
+0) перекресток это пересечение двух двухполосных дорог
 1) все сгенерированные машины будут размещены в начало перекрестка
 2) значение x y это левый верхний угол машины и не важно как она едет, она все равно квадратная 100 на 100
+3) расунок дорог прилогается, наверное))
 тогда координаты для машин будут:
 CarFromTop
-x= SCREEN_WIDTH / 2 - 100/2
-y= SCREEN_HEIGHT/2 - 100/2 - 100
+x= SCREEN_WIDTH / 2 - 100;
+y= SCREEN_HEIGHT/2 - 2*100;
 
 CarFromBot
-x= SCREEN_WIDTH / 2 - 100/2
-y= SCREEN_HEIGHT/2+ 100/2 
+x= SCREEN_WIDTH / 2;
+y= SCREEN_HEIGHT/2+ 100; 
 
 CarFromLeft()
-x= SCREEN_WIDTH / 2 - 100/2-100
-y= SCREEN_HEIGHT/2 - 100/2
+x= SCREEN_WIDTH / 2 -  2*100;
+y= SCREEN_HEIGHT/2 ;
 
 CarFromRight()
-x= SCREEN_WIDTH / 2 + 100/2
-y= SCREEN_HEIGHT/2 - 100/2
+x= SCREEN_WIDTH / 2 + 100;
+y= SCREEN_HEIGHT/2 - 100;
 */
-// шаг 3 машина с верху
+// шаг 3 машина с верху улучшенная
 void spawnCarFromTop() {
 	sCar* car ;
 	int carType = rand();
-	int x = SCREEN_WIDTH / 2 - 100 / 2;
-	int	y = SCREEN_HEIGHT / 2 - 100 / 2 - 100;
+
 	switch (carType % 3) {
 	case 0:
 		car = new sGasEngine();
-		
+		/*
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::DOWN;
+		*/
 		break;
 
 	case 1:
 		car = new sElectroCar();
+		/*
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::DOWN;
+		*/
 		break;
-	case 2:
+	/*case 2:
 		car = new sHybrid();
+		
+		
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::DOWN;
+		*/
 		break;
+		default: car = new sHybrid();
+
 	}
+
+	int x = SCREEN_WIDTH / 2 - 100;
+	int	y = SCREEN_HEIGHT / 2 - 2 * 100;
+	car->rect = sRect(x, y, 100, 100);
+	car->speed = 1;
+	car->dir = eDirection::DOWN;
 /*
 	if (carType % 3 == 0) {
 		car = new sGasEngine();
@@ -261,8 +301,10 @@ void spawnCarFromTop() {
 
 // шаг 3 машина с низу
 void spawnCarFromBot() {
-	int x = SCREEN_WIDTH / 2 - 100 / 2;
-	int	y = SCREEN_HEIGHT / 2 + 100 / 2;
+
+	int x = SCREEN_WIDTH / 2 ;
+	int	y = SCREEN_HEIGHT / 2 + 100 ;
+
 	sCar* car;
 	int carType = rand();
 	if (carType % 3 == 0) {
@@ -294,8 +336,9 @@ void SpawnCarFromLeft() {
 	sCar* car;
 	int carType = rand();
 
-	int x = SCREEN_WIDTH / 2 - 100 / 2 - 100;
-	int	y = SCREEN_HEIGHT / 2 - 100 / 2;
+	int x = SCREEN_WIDTH / 2 -  2 * 100;
+	int	y = SCREEN_HEIGHT / 2 ;
+
 	if (carType % 3 == 0) {
 		car = new sGasEngine();
 		car->rect = sRect(x, y, 100, 100);
@@ -325,8 +368,8 @@ void SpawnCarFromLeft() {
 void spawnCarFromRight() {
 	sCar* car;
 	int carType = rand();
-	int x = SCREEN_WIDTH / 2 + 100 / 2;
-	int	y = SCREEN_HEIGHT / 2 - 100 / 2;
+	int x = SCREEN_WIDTH / 2 + 100 ;
+	int	y = SCREEN_HEIGHT / 2 - 100;
 	if (carType % 3 == 0) {
 		car = new sGasEngine();
 		car->rect = sRect(x, y, 100, 100);
@@ -357,19 +400,21 @@ void spawnCarFromRight() {
 void spawnCar() {
 	int carDirection = rand();
 	
-	if (carDirection % 4 == 1)
+	if (carDirection % 4 == 0)//1
 		spawnCarFromRight();
 	else 
-		if (carDirection % 4 == 2)
+		if (carDirection % 4 == 3)//2
 			spawnCarFromTop();
 		else 
-			if (carDirection % 4 == 3)
+			if (carDirection % 4 == 2)//3
 				spawnCarFromBot();
 			else 
-				if (carDirection % 4 == 0) 
+				if (carDirection % 4 == 1) //0
 					SpawnCarFromLeft();
 }
 
+
+// переделать так как я не поняла как это работает
 bool main_loop() {
 	for (auto car : asdasd) {
 		for (auto car22 : asdasd) {
@@ -379,34 +424,76 @@ bool main_loop() {
 			}
 			else {
 				car22->move();
+				cout << car22->Print() << "\n";
 			}
 		}
-		if (car->rect.pos.x <= 0 || car->rect.pos.x >= SCREEN_WIDTH || car->rect.pos.y <= 0 || car->rect.pos.y >= SCREEN_HEIGHT)
-			spawnCar();
+		//if (car->rect.pos.x <= 0 || car->rect.pos.x >= SCREEN_WIDTH || car->rect.pos.y <= 0 || car->rect.pos.y >= SCREEN_HEIGHT)
+		//	spawnCar();
 	}
-	return main_loop(); 
+	return 0;//main_loop(); 
 		//рекурсия надо что то возвращать
 }
 
+/* убираем наслоение машин
+путем попарного сравнения и сдвига если совпадает положение
+*/
+void order()
+{
+	for (int i = 0; i < initialCarsCount; ++i) {
+		for (int j = i+1; j < initialCarsCount; ++j) {
+			
+			if (asdasd[i]->dir==asdasd[j]->dir) {
+
+				asdasd[j]->moveOder(asdasd[i]);
+				
+			}
+			
+		}
+		
+	}
+}
+
+
 int main2(){//int argc, char** argv) {
-	// создание машин
+	/* создание машин 
+	машин создается 20, тогда все варианты направлений расматриваются.
+	вначале они все находятся в одной точке (каждый для своего движеиня)*/
 	for (auto i = 0; i < initialCarsCount; ++i) {
 		spawnCar();
 
 	}
-	
+	// вывод машин для проверки 
 	for (auto i = 0; i < initialCarsCount; ++i) {
 		
-		cout <<i<<"\t"<<asdasd[i]->Print()<<"\n";
+		cout <<i+1<<"\t"<<asdasd[i]->Print()<<"\n";
 	}
+	/* убираем наслоение машин
+	передвигаем наслоеные машины назад от перекрестка, иногда за поле, но они потом "приедут"	*/
+	order();
 	
+	// вывод машин для проверки
+	cout << "\n";
+	for (auto i = 0; i < initialCarsCount; ++i) {
+
+		cout << i+1 << "\t" << asdasd[i]->Print() << "\n";
+	}
+
+	// в процессе
 	//main_loop();
+
+	// вывод машин для проверки
+	cout << "\n";
+	for (auto i = 0; i < initialCarsCount; ++i) {
+
+		cout << i + 1 << "\t" << asdasd[i]->Print() << "\n";
+	}
+
 	return 0;
 }
 
 void main()
 {
-  cout << "Hello World!\n"; 
+  cout << "Hello Cars!\n"; 
   int a;
 
   a = main2();
