@@ -8,7 +8,8 @@
 #include <string>
 
 using namespace std;
-
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
 
 
 struct sPos {
@@ -69,10 +70,11 @@ struct sCar {
 	sRect rect;
 	eDirection dir;
 	int speed;
+	int Id;
 	/*движение 
 	 учитывая, что левый верхний угол машины нулевой, 
 	 то и левый верхний угол экрана будет считаться нулевым,
-	следовательно все, что будет двигать вверх оно будет двигаться противоположно оси ОУ -,
+	следовательно, все, что будет двигать вверх оно будет двигаться противоположно оси ОУ -,
 	а в них - по направлению ОУ +
 	*/
 	void move() {
@@ -109,15 +111,42 @@ struct sCar {
 
 		}
 	}
+	
+	// проверки находятся ли машины на перекрестке
+	bool atСrossroads() {
 
-	// ошибка не при всех значениях возвращает исправлена
+		switch (dir) {
+		case eDirection::UP:
+			if ((rect.pos.x == SCREEN_WIDTH / 2) && (rect.pos.y == SCREEN_HEIGHT / 2 + 100)) return true;
+			else return false;
+			break;
+
+		case eDirection::DOWN:
+			if ((rect.pos.x == SCREEN_WIDTH / 2 - 100) && (rect.pos.y == SCREEN_HEIGHT / 2 - 2 * 100)) return true;
+			else return false;
+			break;
+		case eDirection::RIGHT:
+			if ((rect.pos.x == SCREEN_WIDTH / 2 - 2 * 100) && (rect.pos.y == SCREEN_HEIGHT / 2 )) return true;
+			else return false;
+			break;
+		case eDirection::LEFT:
+			if ((rect.pos.x == SCREEN_WIDTH / 2+100) && (rect.pos.y == SCREEN_HEIGHT / 2 - 100)) return true;
+			else return false;
+			break;
+
+
+
+		}
+	}
+
+	// ошибка не при всех значениях возвращает исправлена?
 	sRect getFuturePos() {
 		//if (dir != NULL)
 		switch (dir) {
 		case eDirection::UP:
-			return sRect(rect.pos.x, rect.pos.y + speed, rect.size.width, rect.size.height);
-		case eDirection::DOWN:
 			return sRect(rect.pos.x, rect.pos.y - speed, rect.size.width, rect.size.height);
+		case eDirection::DOWN:
+			return sRect(rect.pos.x, rect.pos.y + speed, rect.size.width, rect.size.height);
 		case eDirection::RIGHT:
 			return sRect(rect.pos.x + speed, rect.pos.y, rect.size.width, rect.size.width);
 		case eDirection::LEFT:
@@ -169,7 +198,8 @@ struct sCar {
 	{ 
 		
 		string inf;
-		inf = " x = \t" + to_string(rect.pos.x);
+		inf= "id = " + to_string(Id);
+		inf += "\t x = \t" + to_string(rect.pos.x);
 		inf += "\t y = \t" + to_string(rect.pos.y);
 		//inf += "\t height = + to_string(rect.size.height);
 		//inf += "\t width = + to_string(rect.size.width);
@@ -211,14 +241,16 @@ struct sHybrid : sGasEngine, sElectroCar , sCar
 
 /////
 std::vector<sCar*> asdasd;
+std::vector<sCar*> out;
 const int initialCarsCount = 20;
+int idCount = 1;
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+//#define SCREEN_WIDTH 1024
+//#define SCREEN_HEIGHT 768
 
 /*
 анализ по поводу размещения машин:
-0) перекресток это пересечение двух двухполосных дорог
+0) перекресток - это пересечение двух двух полосных дорог
 1) все сгенерированные машины будут размещены в начало перекрестка
 2) значение x y это левый верхний угол машины и не важно как она едет, она все равно квадратная 100 на 100
 3) расунок дорог прилогается, наверное))
@@ -253,7 +285,6 @@ void spawnCarFromTop() {
 		car->dir = eDirection::DOWN;
 		*/
 		break;
-
 	case 1:
 		car = new sElectroCar();
 		/*
@@ -262,16 +293,16 @@ void spawnCarFromTop() {
 		car->dir = eDirection::DOWN;
 		*/
 		break;
-	/*case 2:
+		/*case 2:
 		car = new sHybrid();
-		
-		
+	
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::DOWN;
-		*/
+		
 		break;
-		default: car = new sHybrid();
+		*/
+	default: car = new sHybrid();
 
 	}
 
@@ -280,6 +311,9 @@ void spawnCarFromTop() {
 	car->rect = sRect(x, y, 100, 100);
 	car->speed = 1;
 	car->dir = eDirection::DOWN;
+	car->Id = idCount;
+	idCount++;
+
 /*
 	if (carType % 3 == 0) {
 		car = new sGasEngine();
@@ -319,7 +353,7 @@ void spawnCarFromBot() {
 		car->speed = 1;
 		car->dir = eDirection::UP;
 	}
-	else if (carType % 3 == 2) {
+	else { //if (carType % 3 == 2) {
 		car = new sHybrid();
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
@@ -328,7 +362,10 @@ void spawnCarFromBot() {
 	//
 	//car->rect = sRect(SCREEN_WIDTH / 2, SCREEN_HEIGHT, 100, 100);
 	//car->speed = 1;
+	car->Id = idCount;
+	idCount++;
 	asdasd.push_back(car);
+
 }
 
 // шаг 3 машина с лева
@@ -351,7 +388,7 @@ void SpawnCarFromLeft() {
 		car->speed = 1;
 		car->dir = eDirection::RIGHT;
 	}
-	else if (carType % 3 == 2) {
+	else {//if (carType % 3 == 2) {
 		car = new sHybrid();
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
@@ -361,6 +398,8 @@ void SpawnCarFromLeft() {
 	car->rect = sRect(0, SCREEN_HEIGHT / 2, 100, 100);
 	car->speed = 1;
 	*/
+	car->Id = idCount;
+	idCount++;
 	asdasd.push_back(car);
 }
 
@@ -375,24 +414,31 @@ void spawnCarFromRight() {
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::LEFT;
+		car->Id = idCount;
+		idCount++;
 	}
 	if (carType % 3 == 1) {
 		car = new sElectroCar();
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::LEFT;
+		car->Id = idCount;
+		idCount++;
 	}
 	 if (carType % 3 == 2) {
 		car = new sHybrid();
 		car->rect = sRect(x, y, 100, 100);
 		car->speed = 1;
 		car->dir = eDirection::LEFT;
+		car->Id = idCount;
+		idCount++;
 	}
 	
 	/*
 	car->rect = sRect(0, SCREEN_HEIGHT / 2, 100, 100);
 	car->speed = 1;
 	*/
+	
 	 asdasd.push_back(car);
 }
 
@@ -414,8 +460,118 @@ void spawnCar() {
 }
 
 
-// переделать так как я не поняла как это работает
-bool main_loop() {
+/*логика как проезжают светофор
+Программа решает очередность проезда машин на перекрестке:
+Если есть помеха справа, то машина должна пропустить машину справа.
+Если на перекрестке стоят машины со всех 4х сторон, то первой проезжает машина, у которой минимальная координата по X.
+Машины не должны наезжать друг на друга.
+
+1)результатом выполнения будет список, в котором записан порядок очередности машин
+2)Если есть помеха справа, то машина должна пропустить машину справа.
+за это отвечает needPassOtherCar()
+3)Если на перекрестке стоят машины со всех 4х сторон, то первой проезжает машина, у которой минимальная координата по X.
+на перекрестке машина с Right имеет наименьшие координаты, следовательно, стартует первой
+следующие машины будут DOWN, потом Left и UP, учитывая пункт 2
+
+*/
+void main_loop2() {
+	sCar*  carAtCross[4] = { NULL, NULL, NULL, NULL };;
+	
+	for (auto car : asdasd)
+	{
+		if (car->dir == eDirection::RIGHT)
+		{
+			if (carAtCross[0]==NULL)
+			{
+				carAtCross[0] = car;
+				
+			}
+			else if (car->rect.pos.x > carAtCross[0]->rect.pos.x)
+				carAtCross[0] = car;
+		}
+		if (car->dir == eDirection::DOWN)
+		{
+			if (carAtCross[1] == NULL)
+			{
+				carAtCross[1] = car;
+				
+			}
+			else if (car->rect.pos.y > carAtCross[1]->rect.pos.y)
+				carAtCross[1] = car;
+		}
+		if (car->dir == eDirection::LEFT)
+		{
+			if (carAtCross[2] == NULL)
+			{
+				carAtCross[2] = car;
+				
+			}
+			else if (car->rect.pos.x < carAtCross[2]->rect.pos.x)
+				carAtCross[2] = car;
+		}
+		if (car->dir == eDirection::UP) 
+		{
+			if (carAtCross[3] == NULL)
+			{
+				carAtCross[3] = car;
+				
+			}
+			else if (car->rect.pos.y < carAtCross[3]->rect.pos.y)
+				carAtCross[3] = car;
+		}
+	}
+
+	
+	cout << "\n";
+	for (int i = 0; i < 4; ++i) 
+	{
+		if (carAtCross[i] != NULL) {
+			int j = 0;
+
+			cout << i + 1 << "\t" << carAtCross[i]->Print() << "\n";
+			out.push_back(carAtCross[i]);
+
+			for (auto car : asdasd)
+			{
+				if (car->Id != carAtCross[i]->Id)
+					j++;
+				else break;
+			}
+
+			asdasd.erase(asdasd.begin() + j);
+		}
+	}
+	
+
+	
+
+
+
+/*
+	for (auto car : asdasd) 
+		for (auto car22 : asdasd) 
+	if (car->atСrossroads()&& car22->atСrossroads()) // на перекрестке
+	{
+		
+		if (car->getFuturePos().intersects(car22->getFuturePos()))
+		// кого пропускать?
+		if (car->needPassOtherCar(car22))
+			car->move();
+		   cout <<"1 \t"<< car22->Print() << "\n";
+		// движение
+	}
+	else // не на перекрестке, движение к перекрестку
+	{
+		if (car->getFuturePos().intersects(car22->getFuturePos())) // есть в переди место? да движемся
+		{
+			car->move();
+			cout <<"2 \t" << car22->Print() << "\n";
+		}
+		//else {}// нет места не движемся
+	}
+*/
+	
+/*
 	for (auto car : asdasd) {
 		for (auto car22 : asdasd) {
 			if (car->getFuturePos().intersects(car22->getFuturePos())) {
@@ -427,10 +583,32 @@ bool main_loop() {
 				cout << car22->Print() << "\n";
 			}
 		}
-		//if (car->rect.pos.x <= 0 || car->rect.pos.x >= SCREEN_WIDTH || car->rect.pos.y <= 0 || car->rect.pos.y >= SCREEN_HEIGHT)
-		//	spawnCar();
+		// создание новой машины
+		if (car->rect.pos.x <= 0 || car->rect.pos.x >= SCREEN_WIDTH || car->rect.pos.y <= 0 || car->rect.pos.y >= SCREEN_HEIGHT)
+			spawnCar();
 	}
-	return 0;//main_loop(); 
+	return main_loop2();
+	//рекурсия надо что-то возвращать
+	*/
+
+}
+// старая
+bool main_loop() {
+	for (auto car : asdasd) {
+		for (auto car22 : asdasd) {
+			if (car->getFuturePos().intersects(car22->getFuturePos())) {
+				if (car->needPassOtherCar(car22))
+					car->move();
+			}
+			else {
+				car22->move();
+
+			}
+		}
+		if (car->rect.pos.x <= 0 || car->rect.pos.x >= SCREEN_WIDTH || car->rect.pos.y <= 0 || car->rect.pos.y >= SCREEN_HEIGHT)
+			spawnCar();
+	}
+	return main_loop(); 
 		//рекурсия надо что то возвращать
 }
 
@@ -454,50 +632,71 @@ void order()
 }
 
 
-int main2(){//int argc, char** argv) {
+void main2(){//int argc, char** argv) {
 	/* создание машин 
-	машин создается 20, тогда все варианты направлений расматриваются.
-	вначале они все находятся в одной точке (каждый для своего движеиня)*/
+	машин создается 20, тогда все варианты направлений рассматриваются.
+	вначале они все находятся в одной точке (каждый для своего движения)*/
 	for (auto i = 0; i < initialCarsCount; ++i) {
 		spawnCar();
 
 	}
+	
 	// вывод машин для проверки 
-	for (auto i = 0; i < initialCarsCount; ++i) {
+	/*for (auto i = 0; i < initialCarsCount; ++i) {
 		
 		cout <<i+1<<"\t"<<asdasd[i]->Print()<<"\n";
 	}
+	*/
 	/* убираем наслоение машин
-	передвигаем наслоеные машины назад от перекрестка, иногда за поле, но они потом "приедут"	*/
+	передвигаем наслоённые  машины назад от перекрестка, иногда за поле, но они потом "приедут"	*/
 	order();
 	
 	// вывод машин для проверки
 	cout << "\n";
-	for (auto i = 0; i < initialCarsCount; ++i) {
+	for (auto i = 0; i < asdasd.size(); ++i) {
 
 		cout << i+1 << "\t" << asdasd[i]->Print() << "\n";
 	}
-
-	// в процессе
-	//main_loop();
-
-	// вывод машин для проверки
 	cout << "\n";
-	for (auto i = 0; i < initialCarsCount; ++i) {
+	
+	for (int i =1 ; 0!=asdasd.size(); i++)
+	{// в процессе
+		main_loop2();
+/*
+		// вывод машин для проверки
+		cout <<i << " -- \n";
 
-		cout << i + 1 << "\t" << asdasd[i]->Print() << "\n";
+		for (auto i = 0; i < asdasd.size(); ++i) {
+
+			cout << i + 1 << "\t" << asdasd[i]->Print() << "\n";
+		}
+*/
+	
 	}
+	/*cout << "\n";
+	for (auto i = 0; i < out.size(); ++i) {
 
-	return 0;
+		cout  << out[i]->Id << "\t";
+	}
+	cout << "\n";
+	*/
+	
 }
+
+
 
 void main()
 {
   cout << "Hello Cars!\n"; 
   int a;
 
-  a = main2();
-  cout << a;
+	main2();
+	cout << "\n";
+	for (auto i = 0; i < out.size(); ++i) {
+
+		cout << out[i]->Id << "\t";
+	}
+	cout << "\n";
 
   system("pause");
 }
@@ -506,7 +705,7 @@ void main()
 Исправить логику и оптимизировать код. Допускается дополнение и изменение кода.
 
 Программа решает очередность проезда машин на перекрестке:
-Если есть помеха справа то машина должна пропустить машину справа.
+Если есть помеха справа, то машина должна пропустить машину справа.
 Если на перекрестке стоят машины со всех 4х сторон, то первой проезжает машина, у которой минимальная координата по X.
 Машины не должны наезжать друг на друга.
 */
